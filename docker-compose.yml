@@ -1,7 +1,30 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: udp_data
+      POSTGRES_USER: udp_user
+      POSTGRES_PASSWORD: udp_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U udp_user -d udp_data"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   udp-server:
     build: .
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://udp_user:udp_password@postgres:5432/udp_data
     ports:
       - "9999:9999/udp"
-    command: ["python", "-m", "udp_engine.main", "--host", "0.0.0.0", "--port", "9999"]
+    command: ["python", "-m", "udp_engine.main", "--host", "0.0.0.0", "--port", "9999", "--uvloop"]
+
+volumes:
+  postgres_data:

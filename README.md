@@ -1,11 +1,24 @@
 # Asyncio UDP Engine
 
-Production-oriented UDP server with bounded backpressure, packet-size validation, per-source rate limiting, graceful shutdown, structured package layout, and Docker support.
+A production-oriented asyncio UDP service with bounded backpressure, packet validation, per-source rate limiting, graceful shutdown, runtime statistics, Docker deployment, and asynchronous PostgreSQL batch persistence.
+
+## Run without PostgreSQL
 
 ```bash
-python -m venv .venv && . .venv/bin/activate
+python -m venv .venv
+. .venv/bin/activate
 pip install -r requirements.txt
-PYTHONPATH=src python -m udp_engine.main --port 9999
+PYTHONPATH=src python -m udp_engine.main --no-persistence --port 9999
 ```
 
-The receiver performs only fast validation and a non-blocking queue operation. Heavy persistence should be added as a separate batch pipeline so database latency never blocks UDP reception. Add authenticated protocol messages, HMAC, metrics, load tests, and PostgreSQL batching before exposing it to an untrusted network.
+## Run with PostgreSQL
+
+```bash
+docker compose up --build
+```
+
+The receive callback performs only validation, rate limiting, and a non-blocking queue operation. Workers process packets and enqueue database rows separately; a batch persister writes rows without blocking UDP reception. Queue limits intentionally drop excess datagrams instead of exhausting memory.
+
+## Production checklist
+
+Before exposing this service to an untrusted network, add an authenticated application protocol (for example HMAC with replay protection), Prometheus/OpenTelemetry metrics, firewall rules, load tests, and secret management. UDP is connectionless and does not provide delivery guarantees.

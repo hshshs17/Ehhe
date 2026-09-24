@@ -5,8 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "asyncio-udp-engine"
 version = "1.0.0"
+description = "Production-oriented asyncio UDP engine"
 requires-python = ">=3.11"
 dependencies = ["psycopg[binary,pool]>=3.2,<4", "uvloop>=0.19; platform_system != 'Windows'"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 
 [tool.setuptools.packages.find]
 where = ["src"]
